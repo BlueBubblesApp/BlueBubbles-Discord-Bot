@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { Client, Message } from 'discord.js';
 
 const client = new Client();
@@ -15,4 +16,4 @@ client.on('error', (e) => {
     console.error('Discord client error!', e);
 });
 
-client.login('Nzk1NDM3NjQ4MjAyMTcwMzc5.X_JXCQ.-mmvDDn9dfDIU-cFRv0vA1YvM40')
+client.login(process.env.TOKEN)
