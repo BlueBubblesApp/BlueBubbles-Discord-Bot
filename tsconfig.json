@@ -5,12 +5,11 @@
       "target": "es2016",
       "outDir": "dist",
       "lib": [
-        "es6",
+        "es2016",
         "dom"
       ],
       "sourceMap": true,
       "types": [
-        // add node as an option
         "node",
         "reflect-metadata"
       ],

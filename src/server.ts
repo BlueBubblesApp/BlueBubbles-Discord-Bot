@@ -1,14 +1,16 @@
 import 'dotenv/config'
 import { Client, Message } from 'discord.js';
+import { CommandManager } from './commandManager';
 
 const client = new Client();
+const cmdManager = new CommandManager(process.env.PREFIX);
 
 client.on('ready', () => {
     console.log('BlueBubbles Bot Has Started!')
 });
 
 client.on('message', (message: Message) => {
-    console.log(`User ${message.author.username}#${message.author.discriminator} says "${message.content}" / "${message.cleanContent}"`);
+    cmdManager.handleMessage(message);
 });
 
 client.on('error', (e) => {
