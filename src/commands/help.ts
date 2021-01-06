@@ -1,63 +1,53 @@
-import { Command, CommandContext } from '../models';
+import { Command, Commandable } from '../models';
 
-export class HelpCommand implements Command {
-  readonly commandNames = ['help', 'halp', 'hlep'];
+export class HelpCommand implements Commandable {
+  readonly aliases = ['help', 'h'];
+  private commands: Commandable[];
+  private prefix: string;
 
-  private commands: Command[];
-
-  constructor(commands: Command[]) {
+  constructor(prefix:string, commands: Commandable[]) {
+    this.prefix = prefix;
     this.commands = commands;
   }
 
-  async run(commandContext: CommandContext): Promise<void> {
-    const allowedCommands = this.commands.filter((command) =>
-      command.hasPermissionToRun(commandContext),
+  async executeCommand(parsedMessage: Command): Promise<void> {
+    const userCommands = this.commands.filter((command) =>
+      command.userCanRun(parsedMessage),
     );
 
-    if (commandContext.args.length === 0) {
-      // No command specified, give the user a list of all commands they can use.
-      const commandNames = allowedCommands.map(
-        (command) => command.commandNames[0],
+    if (parsedMessage.args.length === 0) {
+      const aliases = userCommands.map(
+        (command) => command.aliases[0],
       );
-      await commandContext.originalMessage.reply(
-        `here is a list of commands you can run: ${commandNames.join(
-          ', ',
-        )}. \n\nTry ${process.env.PREFIX}help ${commandNames[0]} to learn more about one of them.`
+
+      await parsedMessage.message.reply(
+        `Here is a list of your available commands ${aliases.join(', ',)}.\
+        \n\nTry ${this.prefix}help {{alias}} to learn more about one of them.`
       );
       return;
     }
 
-    const matchedCommand = this.commands.find((command) =>
-      command.commandNames.includes(commandContext.args[0]),
+    const foundComand = this.commands.find((command) =>
+      command.aliases.includes(parsedMessage.args[0]),
     );
-    if (!matchedCommand) {
-      await commandContext.originalMessage.reply(
-        `I don't know about that command :(.
-        Try ${process.env.PREFIX}help to find all commands you can use.`,
+
+    if (!foundComand) {
+      await parsedMessage.message.reply(
+        `Unknown Command. Please try ${process.env.PREFIX}help for more info on what I can do.`,
       );
-      throw Error('Unrecognized command');
+      return;
     }
-    if (allowedCommands.includes(matchedCommand)) {
-      await commandContext.originalMessage.reply(
-        this.buildHelpMessageForCommand(matchedCommand, commandContext),
-      );
+    
+    if (userCommands.includes(foundComand)) {
+      await parsedMessage.message.reply(`${foundComand.fetchHelp(this.prefix)}`);
     }
   }
 
-  private buildHelpMessageForCommand(
-    command: Command,
-    context: CommandContext,
-  ): string {
-    return `${command.getHelpMessage(
-      context.commandPrefix,
-    )}\nCommand aliases: ${command.commandNames.join(', ')}`;
-  }
-
-  hasPermissionToRun(commandContext: CommandContext): boolean {
+  userCanRun(parsedMessage: Command): boolean {
     return true;
   }
 
-  getHelpMessage(commandPrefix: string) {
-    return 'I think you already know how to use this command...';
+  fetchHelp(prefix: string) {
+    return 'You are already using this command properly :)'
   }
 }

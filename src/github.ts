@@ -1,11 +1,5 @@
 import { Octokit } from "@octokit/core";
 
-const allowedRepos = {
-    "server": "BlueBubbles-Server",
-    "android": "BlueBubbles-Android-App",
-    "desktop": "BlueBubbles-Desktop-App"
-}
-
 export class GitHub {
     api: Octokit
 
@@ -14,31 +8,34 @@ export class GitHub {
     }
 
     async createIssue(owner: string, ghRepo: string, title: string, body: string) {
-        let repo = null;
+        let repo: string = null;
 
-        if (allowedRepos.hasOwnProperty(ghRepo)) {
-            repo = allowedRepos[ghRepo]
+        if (ALLOWED_REPOS.hasOwnProperty(ghRepo.toLocaleLowerCase())) {
+            repo = ALLOWED_REPOS[ghRepo.toLocaleLowerCase()]
         }
 
         if (!repo) {
-            console.error('sometingwong with repo');
+            console.log(`An unhabled repository [${ghRepo}] was provided!`)
             return;
         }
 
-        const res = await this.api.request('POST /repos/{owner}/{repo}/issues', {
+        return await this.api.request("POST /repos/{owner}/{repo}/issues", {
             owner,
             repo,
             title,
             body,
-            labels: ['Bot Created']
+            labels: LABELS
           });
-        
-
-          if (res == null || res == undefined) {
-              console.error('sometingwong with github');
-              return;
-          }
-
-          return res
     }
 }
+
+const ALLOWED_REPOS = {
+    "server": "BlueBubbles-Server",
+    "android": "BlueBubbles-Android-App",
+    "desktop": "BlueBubbles-Desktop-App",
+    "bot": "BlueBubbles-Discord-Bot"
+}
+
+const LABELS = [
+    "Bot Created"
+]

@@ -1,19 +1,21 @@
-import { CommandContext } from './commandContext';
+import { Message } from 'discord.js';
 
-export interface Command {
-  /**
-   * List of aliases for the command.
-   *
-   * The first name in the list is the primary command name.
-   */
-  readonly commandNames: string[];
+export class Command {
+  readonly parsedCommand: string;
+  readonly args: string[];
+  readonly message: Message;
+  readonly prefix: string;
 
-  /** Usage documentation. */
-  getHelpMessage(commandPrefix: string): string;
+  constructor(message: Message, prefix: string) {
+    this.prefix = prefix;
+    const parsedMessage = message.content
+      .slice(prefix.length)
+      .trim();
 
-  /** Execute the command. */
-  run(parsedUserCommand: CommandContext): Promise<void>;
+    const splitMessage = parsedMessage.match(/\w+|"[^"]+"/g)
 
-  /** Returns whether or not the requesting user can use the command in the current context. */
-  hasPermissionToRun(parsedUserCommand: CommandContext): boolean;
+    this.parsedCommand = splitMessage.shift()!.toLowerCase();
+    this.args = splitMessage;
+    this.message = message;
+  }
 }

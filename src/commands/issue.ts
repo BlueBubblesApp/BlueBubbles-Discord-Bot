@@ -1,20 +1,20 @@
-import { Command, CommandContext } from '../models';
+import { Command, Commandable } from '../models';
 import { GitHub } from '../github';
 
-export class IssueCommand implements Command {
-  commandNames = ['issue'];
+export class IssueCommand implements Commandable {
+  aliases = ['issue', 'i'];
 
-  getHelpMessage(commandPrefix: string): string {
-    return `Use ${commandPrefix}issue to create a github issue.
-    Useage: ${process.env.PREFIX}issue {Repository} {Title} {Message}
-    Example: ${process.env.PREFIX}issue android "Messages won't send" "When I try to send messages it the app gives an error."
-    Allowed repositories android, server, desktop
-    `;
+  fetchHelp(prefix: string): string {
+    return `Command aliases: ${this.aliases.join(', ')}
+    Use ${prefix}issue to create a github issue.
+    Useage: ${prefix}issue {Repository} {Title} {Message}
+    Example: ${prefix}issue android "Messages won't send" "When I try to send messages it the app gives an error."
+    Allowed repositories android, server, desktop, and bot`;
   }
 
-  async run(parsedUserCommand: CommandContext): Promise<void> {
-    const args = parsedUserCommand.args;
-    const message = parsedUserCommand.originalMessage
+  async executeCommand(parsedMessage: Command): Promise<void> {
+    const args = parsedMessage.args;
+    const message = parsedMessage.message
     const gh = new GitHub(process.env.GH_TOKEN)
     const regex = new RegExp('"', 'g');
 
@@ -36,18 +36,20 @@ export class IssueCommand implements Command {
         issueBody,
       );
 
-      let reply = SUCCESS_TEMPLATE.replace("{PLACEHOLDER}", response.data.html_url)
-      await message.reply(reply)
+      if (!response || response == undefined) {
+        await message.reply(FAILURE_RESPONSE);
+      }
+
+      let reply = `Issue created successfully! ${response.data.html_url}`
+      await message.reply(reply);
     }
     catch(error) {
-      console.error(error)
-      let formattedError = JSON.stringify(error, null, 4)
-      let reply = ERROR_TEMPLATE.replace('{PLACEHOLDER}', formattedError)
-      await message.reply(reply)
+      console.error(error);
+      await message.reply(FAILURE_RESPONSE);
     }
   }
 
-  hasPermissionToRun(parsedUserCommand: CommandContext): boolean {
+  userCanRun(parsedMessage: Command): boolean {
     return true;
   }
 }
@@ -55,23 +57,9 @@ export class IssueCommand implements Command {
 const ISSUE_TEMPLATE =
 `
 {PLACEHOLDER}
----
-Issue created by BlueBubbles Bot in the \`{GUILD}\` commnity on \
+
+>  Issue created by BlueBubbles Bot in the \`{GUILD}\` commnity on \
 behalf of \`@{USER}\` in \`#{CHANNEL}\`.
 `
 
-const ERROR_TEMPLATE =
-`
-Command should be: ${process.env.PREFIX}issue {Repository} {Title} {Message}
-Example: ${process.env.PREFIX}issue android "Messages won't send" "When I try to send messages it the app gives an error."
-An error occurred while creating the issue.
-Details:
-\`\`\`
-{PLACEHOLDER}
-\`\`\`
-`
-
-const SUCCESS_TEMPLATE =
-`
-Issue created successfully! {PLACEHOLDER}
-`
+const FAILURE_RESPONSE = "Sorry, an error occurred while creating the issue.";

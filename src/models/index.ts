@@ -1,2 +1,2 @@
+export * from './commandable';
 export * from './command';
-export * from './commandContext';
