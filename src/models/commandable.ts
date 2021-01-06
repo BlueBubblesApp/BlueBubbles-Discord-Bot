@@ -1,4 +1,4 @@
-import { Command } from './command';
+import { Command, SubCommandable } from './';
 
 export interface Commandable {
   readonly aliases: string[];

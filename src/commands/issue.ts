@@ -1,65 +1,71 @@
-import { Command, Commandable } from '../models';
-import { GitHub } from '../github';
+import { Command, Commandable, SubCommandable } from '../models';
+import { CreateIssue } from '../commands/issues';
+import { Message } from 'discord.js';
 
-export class IssueCommand implements Commandable {
+export class IssueCommand implements Commandable, SubCommandable {
   aliases = ['issue', 'i'];
-
-  fetchHelp(prefix: string): string {
-    return `Command aliases: ${this.aliases.join(', ')}
-    Use ${prefix}issue to create a github issue.
-    Useage: ${prefix}issue {Repository} {Title} {Message}
-    Example: ${prefix}issue android "Messages won't send" "When I try to send messages it the app gives an error."
-    Allowed repositories android, server, desktop, and bot`;
-  }
+  subCommands = [
+    new CreateIssue()
+  ]
 
   async executeCommand(parsedMessage: Command): Promise<void> {
     const args = parsedMessage.args;
-    const message = parsedMessage.message
-    const gh = new GitHub(process.env.GH_TOKEN)
-    const regex = new RegExp('"', 'g');
 
-    let channel = message.guild.channels.cache.find(
-      channel => channel.id === message.channel.id
-    );
+    if (args.length == 0) {
+      await parsedMessage.message.reply(`Sorry, you must supply proper arguments. \
+See ${parsedMessage.prefix}help issue for more info.`)
+      return;
+    }
 
-    let issueBody = ISSUE_TEMPLATE
-      .replace("{PLACEHOLDER}", args[2].replace(regex, "") || "_No content_")
-      .replace("{GUILD}", message.guild.name)
-      .replace("{CHANNEL}", channel.name)
-      .replace("{USER}", message.author.username);
-    
-    try {
-      const response = await gh.createIssue(
-        process.env.GH_NAME,
-        args[0],
-        args[1].replace(regex, ""),
-        issueBody,
-      );
+    let availableSubCommands = []
+    for (const subCommand of this.subCommands) {
+      availableSubCommands.push(...subCommand.aliases)
+    }
 
-      if (!response || response == undefined) {
-        await message.reply(FAILURE_RESPONSE);
+    if (!availableSubCommands.includes(args[0])) {
+
+      if (['android', 'desktop', 'server', 'bot'].includes(args[0].toLowerCase())
+        && args.length > 1) {
+          const subCommand = this.subCommands.find((command) =>
+            command.aliases.includes("create")
+          );
+
+          subCommand.executeCommand(parsedMessage);
+          return;
       }
 
-      let reply = `Issue created successfully! ${response.data.html_url}`
-      await message.reply(reply);
+      await parsedMessage.message.reply(`Sorry, I don't understand the sub command [${args[0]}]! \
+See ${parsedMessage.prefix}help issue for more info.`);
+      return;
     }
-    catch(error) {
-      console.error(error);
-      await message.reply(FAILURE_RESPONSE);
-    }
+
+    const subCommand = this.subCommands.find((command) =>
+        command.aliases.includes(args[0])
+    );
+
+    parsedMessage.args.shift()!.toLowerCase();
+    subCommand.executeCommand(parsedMessage)
   }
 
   userCanRun(parsedMessage: Command): boolean {
     return true;
   }
+
+  fetchSubHelp(prefix: string): string {
+    let subCommandList: string = '';
+    let subCommandHelp: string = '';
+    for (const subCommand of this.subCommands) {
+      subCommandHelp = subCommandHelp + subCommand.fetchHelp(prefix) + "\n\n";
+      subCommandList = subCommandList + subCommand.aliases[0] + " ";
+    }
+    return `Sub Commands: ${subCommandList}
+    
+${subCommandHelp}
+    `;
+  }
+
+  fetchHelp(prefix: string): string {
+    return `Command aliases: ${this.aliases.join(', ')}
+${this.fetchSubHelp(prefix)}`
+  }
 }
-
-const ISSUE_TEMPLATE =
-`
-{PLACEHOLDER}
-
->  Issue created by BlueBubbles Bot in the \`{GUILD}\` commnity on \
-behalf of \`@{USER}\` in \`#{CHANNEL}\`.
-`
-
-const FAILURE_RESPONSE = "Sorry, an error occurred while creating the issue.";

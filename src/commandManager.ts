@@ -7,12 +7,13 @@ export class CommandManager {
   private readonly prefix: string;
 
   constructor(prefix: string) {
+    this.prefix = prefix;
+
     this.commands = [
       new IssueCommand()
     ]
 
     this.commands.push(new HelpCommand(this.prefix, this.commands));
-    this.prefix = prefix;
   }
 
   async handler(message: Message): Promise<void> {
@@ -20,14 +21,14 @@ export class CommandManager {
       return;
     }
 
-    const commandContext = new Command(message, this.prefix);
+    const context = new Command(message, this.prefix);
 
     const allowedCommands = this.commands.filter((command) =>
-      command.userCanRun(commandContext),
+      command.userCanRun(context),
     );
 
     const matchedCommand = this.commands.find((command) =>
-      command.aliases.includes(commandContext.parsedCommand),
+      command.aliases.includes(context.parsedCommand),
     );
 
     if (!matchedCommand) {
@@ -35,7 +36,7 @@ export class CommandManager {
     } else if (!allowedCommands.includes(matchedCommand)) {
       await message.reply(`you aren't allowed to use that command. Try ${process.env.PREFIX}help.`);
     } else {
-      await matchedCommand.executeCommand(commandContext);
+      await matchedCommand.executeCommand(context);
     }
   }
 
