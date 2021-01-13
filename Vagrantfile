@@ -19,17 +19,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.synced_folder "./", "/vagrant"
   end
 
-  config.vm.provision "shell", inline: <<-SHELL
-    sudo curl -sL https://deb.nodesource.com/setup_14.x | sudo bash -
-    sudo apt -y install nodejs
-    sudo apt -y install build-essential
-    sudo npm i -g yarn
-    sudo npm i -g pm2
-  SHELL
+  config.vm.provision "shell", path: "bootstrap.sh", privileged: true
 
   config.vm.provision "shell", run: "always", inline: <<-SHELL
-    cd /vagrant
-    yarn
-    pm2 start yarn --name "BlueBubbles-Bot" -- start
+    pm2 restart 0
   SHELL
 end

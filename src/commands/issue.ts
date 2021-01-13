@@ -1,6 +1,12 @@
 import { Command, Commandable, SubCommandable } from '../models';
 import { CreateIssue } from '../commands/issues';
-import { Message } from 'discord.js';
+
+const ALLOWED_REPOS = [
+  "server",
+  "android",
+  "desktop",
+  "bot"
+]
 
 export class IssueCommand implements Commandable, SubCommandable {
   aliases = ['issue', 'i'];
@@ -17,6 +23,11 @@ See ${parsedMessage.prefix}help issue for more info.`)
       return;
     }
 
+    if (!ALLOWED_REPOS.includes(args[0]) && !ALLOWED_REPOS.includes(args[1])) {
+      await parsedMessage.message.reply(`Allowed repositories are ${ALLOWED_REPOS.join(', ')}`)
+      return;
+    }
+
     let availableSubCommands = []
     for (const subCommand of this.subCommands) {
       availableSubCommands.push(...subCommand.aliases)
@@ -24,7 +35,7 @@ See ${parsedMessage.prefix}help issue for more info.`)
 
     if (!availableSubCommands.includes(args[0])) {
 
-      if (['android', 'desktop', 'server', 'bot'].includes(args[0].toLowerCase())
+      if (ALLOWED_REPOS.includes(args[0].toLowerCase())
         && args.length > 1) {
           const subCommand = this.subCommands.find((command) =>
             command.aliases.includes("create")
@@ -65,7 +76,7 @@ ${subCommandHelp}
   }
 
   fetchHelp(prefix: string): string {
-    return `Command aliases: ${this.aliases.join(', ')}
+    return `Command aliases: \`${this.aliases.join(', ')}\`
 ${this.fetchSubHelp(prefix)}`
   }
 }

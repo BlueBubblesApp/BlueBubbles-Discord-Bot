@@ -21,8 +21,8 @@ export class HelpCommand implements Commandable {
       );
 
       await parsedMessage.message.reply(
-        `Here is a list of your available commands ${aliases.join(', ',)}.\
-        \n\nTry ${this.prefix}help {{alias}} to learn more about one of them.`
+        `Here is a list of your available commands \`${aliases.join(', ',)}.\`\
+        \n\nTry \`${this.prefix}help {{alias}}\` to learn more about one of them.`
       );
       return;
     }

@@ -1,6 +1,6 @@
 import { Message } from 'discord.js';
 import { Command, Commandable } from './models';
-import { HelpCommand, IssueCommand } from './commands';
+import { HelpCommand, IssueCommand, ConfigCommand } from './commands';
 
 export class CommandManager {
   private commands: Commandable[];
@@ -10,7 +10,8 @@ export class CommandManager {
     this.prefix = prefix;
 
     this.commands = [
-      new IssueCommand()
+      new IssueCommand(),
+      new ConfigCommand()
     ]
 
     this.commands.push(new HelpCommand(this.prefix, this.commands));

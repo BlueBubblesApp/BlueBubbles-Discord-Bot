@@ -15,8 +15,10 @@ export class CreateIssue implements Commandable {
             channel => channel.id === message.channel.id
         );
 
+        let placeholder = args[2] || "_No content_";
+
         let issueBody = ISSUE_TEMPLATE
-            .replace("{PLACEHOLDER}", args[2].replace(regex, "") || "_No content_")
+            .replace("{PLACEHOLDER}", placeholder.replace(regex, ""))
             .replace("{GUILD}", message.guild.name)
             .replace("{CHANNEL}", channel.name)
             .replace("{USER}", message.author.username);
@@ -47,7 +49,7 @@ export class CreateIssue implements Commandable {
     }
 
     fetchHelp(prefix: string): string {
-        return `Command aliases: ${this.aliases.join(', ')}
+        return `Command aliases: \`${this.aliases.join(', ')}\`
 Use \`${prefix}issue create\` to create a github issue.
 Useage: \`${prefix}issue create {Repository} {Title} {Message}\``;
     }
